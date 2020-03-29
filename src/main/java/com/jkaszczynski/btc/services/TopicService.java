@@ -18,4 +18,8 @@ public class TopicService {
         topic.setName(name);
         return topicRepository.save(topic);
     }
+
+    public Topic getTopic(Long id) {
+        return topicRepository.findById(id).orElseThrow();
+    }
 }

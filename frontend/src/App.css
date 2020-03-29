@@ -1,0 +1,12 @@
+.App {
+    text-align: center;
+}
+
+.display {
+    margin-right: 5px;
+}
+
+.vote {
+    display: inline-block;
+    width: 30px;
+}

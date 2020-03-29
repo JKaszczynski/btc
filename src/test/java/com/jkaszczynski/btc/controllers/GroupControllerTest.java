@@ -14,6 +14,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -45,20 +49,20 @@ public class GroupControllerTest {
 
     @Test
     void whenNewGroupCreated_thenReturnGroupDetails() throws Exception {
-        mockMvc.perform(post("/topic/" + topicId)
+        mockMvc.perform(post("/topic/" + topicId + "/groups")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createGroupBasic())))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("id").isNumber())
-                .andExpect(jsonPath("topic.id").isNumber())
-                .andExpect(jsonPath("name").isString());
+                .andExpect(jsonPath("[0].id").isNumber())
+                .andExpect(jsonPath("[0].topic.id").isNumber())
+                .andExpect(jsonPath("[0].name").isString());
     }
 
-    private GroupBasic createGroupBasic() {
+    private List<GroupBasic> createGroupBasic() {
         GroupBasic groupBasic = new GroupBasic();
         groupBasic.setTopicId(topicId);
         groupBasic.setName("Test1");
-        return groupBasic;
+        return Collections.singletonList(groupBasic);
     }
 
     @Test
@@ -69,7 +73,7 @@ public class GroupControllerTest {
         groupRepository.save(createGroup("test4"));
         groupRepository.save(createGroup("test5"));
 
-        mockMvc.perform(get("/topic/" + topicId))
+        mockMvc.perform(get("/topic/" + topicId + "/groups"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(5)))

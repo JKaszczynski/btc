@@ -17,16 +17,16 @@ public class GroupService {
         this.groupRepository = groupRepository;
     }
 
-    public Group add(GroupBasic groupBasic) {
-        Group group = asEntity(groupBasic);
-        return groupRepository.save(group);
+    public List<Group> addAll(Long topicId, List<GroupBasic> groupsBasics) {
+        List<Group> groups = groupsBasics.stream().map(g -> asEntity(g, topicId)).collect(Collectors.toList());
+        return groupRepository.saveAll(groups);
     }
 
-    private Group asEntity(GroupBasic groupBasic) {
+    private Group asEntity(GroupBasic groupBasic, Long topicId) {
         Group group = new Group();
         group.setName(groupBasic.getName());
         Topic topic = new Topic();
-        topic.setId(groupBasic.getTopicId());
+        topic.setId(topicId);
         group.setTopic(topic);
         group.setVotes(0L);
         return group;

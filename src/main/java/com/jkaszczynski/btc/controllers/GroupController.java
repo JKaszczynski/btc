@@ -17,13 +17,13 @@ public class GroupController {
         this.groupService = groupService;
     }
 
-    @PostMapping("/topic/{id}")
-    public ResponseEntity<?> addGroup(@RequestBody GroupBasic groupBasic) {
-        Group group = groupService.add(groupBasic);
-        return ResponseEntity.status(HttpStatus.CREATED).body(group);
+    @PostMapping("/topic/{id}/groups")
+    public ResponseEntity<?> addGroups(@PathVariable("id") Long topicId, @RequestBody List<GroupBasic> groupsBasics) {
+        List<Group> groups = groupService.addAll(topicId, groupsBasics);
+        return ResponseEntity.status(HttpStatus.CREATED).body(groups);
     }
 
-    @GetMapping("/topic/{id}")
+    @GetMapping("/topic/{id}/groups")
     public List<GroupBasic> getAllGroups(@PathVariable("id") Long topicId) {
         return groupService.getAll(topicId);
     }

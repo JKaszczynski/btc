@@ -5,10 +5,7 @@ import com.jkaszczynski.btc.entities.Topic;
 import com.jkaszczynski.btc.services.TopicService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class TopicController {
@@ -19,10 +16,14 @@ public class TopicController {
         this.topicService = topicService;
     }
 
-    @PostMapping
-    @RequestMapping("/topic")
+    @PostMapping(value = {"/", "/topic"})
     public ResponseEntity<?> addTopic(@RequestBody TopicBasic topicBasic) {
         Topic topic = topicService.add(topicBasic.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(topic);
+    }
+
+    @GetMapping("/topic/{id}")
+    public Topic getTopic(@PathVariable Long id) {
+        return topicService.getTopic(id);
     }
 }
