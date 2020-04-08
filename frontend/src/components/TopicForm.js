@@ -28,13 +28,13 @@ export const TopicForm = () => {
 
         postRequest("", {"name": value})
             .then((data) => {
-                addGroups(data.id);
+                persistGroups(data.id);
             })
             .catch((err) => {
                 console.info(err);
             });
 
-        const addGroups = (topicId) => {
+        const persistGroups = (topicId) => {
             postRequest(`${topicId}/groups`, groups)
                 .then(function (data) {
                     setGroups(data);
@@ -48,13 +48,32 @@ export const TopicForm = () => {
     };
 
     const handleAddGroup = () => {
-        if (groups.length >= 5) {
+        const groupLimit = 5;
+        if (groups.length >= groupLimit) {
             return;
         }
-        if (groups.length === 4) {
-            document.getElementById("addGroupButton").style.visibility = "hidden";
+        const newGroups = groups.concat([{id: groups.length + 1, name: ""}]);
+        setGroups(newGroups);
+        toggleButtonVisibility(newGroups.length);
+    };
+
+    const handleRemoveGroup = (id) => {
+        if (groups.length === 0) {
+            return;
         }
-        setGroups(groups.concat([{id: groups.length + 1, name: ""}]));
+        let newGroups = groups.filter((group) => (group.id !== id));
+        newGroups = newGroups.map((group, inx) => ({...group, id: inx + 1}));
+        setGroups(newGroups);
+        toggleButtonVisibility(newGroups.length);
+    };
+
+    const toggleButtonVisibility = (arraySize) => {
+        const groupLimit = 5;
+        if (arraySize === groupLimit) {
+            document.getElementById("addGroupButton").disabled = true;
+        } else if (arraySize === groupLimit - 1) {
+            document.getElementById("addGroupButton").disabled = false;
+        }
     };
 
     if (isFetching) {
@@ -68,7 +87,8 @@ export const TopicForm = () => {
                 <h4>Groups</h4>
                 <Groups groups={groups}
                         handleNameChange={handleGroupNameChange}
-                        handleAddGroup={handleAddGroup}/>
+                        handleAddGroup={handleAddGroup}
+                        handleDeleteGroup={handleRemoveGroup}/>
 
                 <input type="submit" value="Create"/>
             </form>
@@ -93,7 +113,8 @@ const Groups = (props) => {
                     key={group.id}
                     id={group.id}
                     value={group.name}
-                    onChange={props.handleNameChange}/>
+                    onChange={props.handleNameChange}
+                    onDelete={props.handleDeleteGroup}/>
             ))}
             <Button value="Add Group"
                     onClick={props.handleAddGroup}
@@ -111,5 +132,7 @@ const Group = (props) => (
             value={props.value}
             onChange={e => props.onChange(props.id, e)}
         />
+        <Button value="Delete"
+                onClick={() => props.onDelete(props.id)}/>
     </div>
 );
