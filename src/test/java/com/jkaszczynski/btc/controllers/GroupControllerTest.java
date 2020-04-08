@@ -93,11 +93,13 @@ public class GroupControllerTest {
     }
 
     @Test
-    void givenExistingGroup_whenNewVote_thenReturnOkStatus() throws Exception {
+    void givenExistingGroup_whenNewVote_thenReturnTheGroup() throws Exception {
         Group group = groupRepository.save(createGroup("test1"));
 
         mockMvc.perform(post("/topic/" + topicId + "/vote/" + group.getId())
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("id").isNumber())
+                .andExpect(jsonPath("votes").isNumber());
     }
 }

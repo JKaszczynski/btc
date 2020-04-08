@@ -37,9 +37,9 @@ public class GroupService {
         return groups.stream().map(GroupBasic::of).collect(Collectors.toList());
     }
 
-    public void vote(Long groupId) {
+    public GroupBasic vote(Long groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow();
         group.setVotes(group.getVotes() + 1);
-        groupRepository.save(group);
+        return GroupBasic.of(groupRepository.save(group));
     }
 }

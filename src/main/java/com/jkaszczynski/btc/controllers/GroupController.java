@@ -30,8 +30,8 @@ public class GroupController {
 
     @PostMapping("/topic/{id}/vote/{groupId}")
     public ResponseEntity<?> vote(@PathVariable Long groupId) {
-        groupService.vote(groupId);
-        return ResponseEntity.status(HttpStatus.OK).build();
+        GroupBasic groupBasic = groupService.vote(groupId);
+        return ResponseEntity.status(HttpStatus.OK).body(groupBasic);
     }
 
 }
