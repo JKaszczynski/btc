@@ -1,10 +1,10 @@
 package com.jkaszczynski.btc.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jkaszczynski.btc.dtos.GroupBasic;
-import com.jkaszczynski.btc.entities.Group;
+import com.jkaszczynski.btc.dtos.OptionBasic;
+import com.jkaszczynski.btc.entities.Option;
 import com.jkaszczynski.btc.entities.Topic;
-import com.jkaszczynski.btc.repositories.GroupRepository;
+import com.jkaszczynski.btc.repositories.OptionRepository;
 import com.jkaszczynski.btc.repositories.TopicRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,7 +14,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class GroupControllerTest {
+public class OptionControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -37,66 +36,66 @@ public class GroupControllerTest {
     private TopicRepository topicRepository;
 
     @Autowired
-    private GroupRepository groupRepository;
+    private OptionRepository optionRepository;
 
     private Long topicId;
 
     @BeforeEach
     public void init() {
         topicId = topicRepository.save(new Topic()).getId();
-        groupRepository.deleteAll();
+        optionRepository.deleteAll();
     }
 
     @Test
-    void whenNewGroupCreated_thenReturnGroupDetails() throws Exception {
-        mockMvc.perform(post("/topic/" + topicId + "/groups")
+    void whenNewOptionCreated_thenReturnOptionDetails() throws Exception {
+        mockMvc.perform(post("/topic/" + topicId + "/options")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createGroupBasic())))
+                .content(objectMapper.writeValueAsString(createOptionBasic())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("[0].id").isNumber())
                 .andExpect(jsonPath("[0].topic.id").isNumber())
-                .andExpect(jsonPath("[0].name").isString());
+                .andExpect(jsonPath("[0].value").isString());
     }
 
-    private List<GroupBasic> createGroupBasic() {
-        GroupBasic groupBasic = new GroupBasic();
-        groupBasic.setTopicId(topicId);
-        groupBasic.setName("Test1");
-        return Collections.singletonList(groupBasic);
+    private List<OptionBasic> createOptionBasic() {
+        OptionBasic optionBasic = new OptionBasic();
+        optionBasic.setTopicId(topicId);
+        optionBasic.setValue("Test1");
+        return Collections.singletonList(optionBasic);
     }
 
     @Test
-    void givenTopicWithGroups_whenGroupsRequested_thenReturnEveryGroupInTopic() throws Exception {
-        groupRepository.save(createGroup("test1"));
-        groupRepository.save(createGroup("test2"));
-        groupRepository.save(createGroup("test3"));
-        groupRepository.save(createGroup("test4"));
-        groupRepository.save(createGroup("test5"));
+    void givenTopicWithOptions_whenOptionsRequested_thenReturnEveryOptionInTopic() throws Exception {
+        optionRepository.save(createOption("test1"));
+        optionRepository.save(createOption("test2"));
+        optionRepository.save(createOption("test3"));
+        optionRepository.save(createOption("test4"));
+        optionRepository.save(createOption("test5"));
 
-        mockMvc.perform(get("/topic/" + topicId + "/groups"))
+        mockMvc.perform(get("/topic/" + topicId + "/options"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(5)))
-                .andExpect(jsonPath("$[0].name").isString())
+                .andExpect(jsonPath("$[0].value").isString())
                 .andExpect(jsonPath("$[0].id").isNumber())
                 .andExpect(jsonPath("$[0].topicId").isNumber());
     }
 
-    private Group createGroup(String groupName) {
-        Group group = new Group();
+    private Option createOption(String optionName) {
+        Option option = new Option();
         Topic topic = new Topic();
         topic.setId(topicId);
-        group.setTopic(topic);
-        group.setName(groupName);
-        group.setVotes(0L);
-        return group;
+        option.setTopic(topic);
+        option.setValue(optionName);
+        option.setVotes(0L);
+        return option;
     }
 
     @Test
-    void givenExistingGroup_whenNewVote_thenReturnTheGroup() throws Exception {
-        Group group = groupRepository.save(createGroup("test1"));
+    void givenExistingOption_whenNewVote_thenReturnTheOption() throws Exception {
+        Option option = optionRepository.save(createOption("test1"));
 
-        mockMvc.perform(post("/topic/" + topicId + "/vote/" + group.getId())
+        mockMvc.perform(post("/topic/" + topicId + "/vote/" + option.getId())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("id").isNumber())

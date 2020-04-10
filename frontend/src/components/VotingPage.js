@@ -1,7 +1,10 @@
 import React from "react";
 import "./App.css";
 import {Button} from "./Button"
-import {postRequest, getRequest} from "./HttpRequest";
+import {postRequest, getRequest} from "./http-request";
+import {optionReducer} from "./option/vote/fetch-options-reducer";
+import {PollResult} from "./option/vote/PollResult"
+import {PollVote} from "./option/vote/PollVote"
 
 export const VotingPage = (props) => {
     const getTopicId = () => {
@@ -9,9 +12,13 @@ export const VotingPage = (props) => {
         return url.substring(url.lastIndexOf("/") + 1);
     };
 
+    const [options, dispatchOptions] = React.useReducer(
+        optionReducer,
+        {data: [], isLoading: false, isError: false}
+    );
+
     const ButtonTextEnum = {result: 'Result', votes: 'Votes'};
 
-    const [groups, setGroups] = React.useState([{id: 0, name: '', votes: 0}]);
     const [topic, setTopic] = React.useState({id: getTopicId()});
     const [resultButtonText, setResultButtonText] = React.useState(ButtonTextEnum.result);
 
@@ -20,17 +27,26 @@ export const VotingPage = (props) => {
             .then((data) => setTopic(data))
     };
 
-    const getGroupData = () => {
-        getData("groups")
-            .then((data) => setGroups(data))
+    const getOptionData = () => {
+        getData("options")
+            .then((data) => dispatchOptions({
+                type: 'OPTIONS_FETCH_SUCCESS',
+                payload: data
+            }))
+            .catch(() => {
+                if (options.data.length === 0) {
+                    dispatchOptions({type: 'OPTIONS_FETCH_FAILURE'});
+                }
+            });
     };
 
     let getData = (path) => (
         getRequest(`${topic.id}/${path}`));
 
     const getPollInfo = () => {
+        dispatchOptions({type: 'OPTIONS_FETCH_INIT'});
         getTopicData();
-        getGroupData();
+        getOptionData();
     };
 
     React.useEffect(getPollInfo, []);
@@ -43,35 +59,26 @@ export const VotingPage = (props) => {
     });
 
     const updateVotes = () => {
-        getGroupData();
+        getOptionData();
     };
 
-    const handleVote = (groupId) => {
-        postRequest(`${topic.id}/vote/${groupId}`)
+    const handleVote = (optionId) => {
+        postRequest(`${topic.id}/vote/${optionId}`)
             .catch(function (err) {
                 console.info(err);
             });
     };
 
-    const renderGroups = () => {
-        return groups.map((group) =>
-            <div key={group.id}>
-                <Group group={group}/>
-                <Button onClick={e => handleVote(group.id, e)} value="Vote"/>
-            </div>
+    const renderVoting = () => {
+        return options.data.map((option) =>
+            <PollVote option={option}
+                      handleVote={handleVote}/>
         );
     };
 
     const renderResults = () => {
-        return groups.map((group) =>
-            <div key={group.id}>
-                <Group group={group}/>
-                <div className="vote">
-                    <span>
-                        {group.votes}
-                    </span>
-                </div>
-            </div>
+        return options.data.map((option) =>
+            <PollResult option={option}/>
         );
     };
 
@@ -84,23 +91,19 @@ export const VotingPage = (props) => {
         }
     };
 
-    const isPollReady = () => (topic && topic.name);
-    if (!isPollReady) {
+    if (options.isLoading) {
         return "Loading...";
+    }
+    if (options.isError) {
+        return "Something went wrong...";
     }
     return (
         <div>
             <h2>{topic.name}</h2>
             <br/>
-            {resultButtonText === ButtonTextEnum.votes ? renderResults() : renderGroups()}
+            {resultButtonText === ButtonTextEnum.votes ? renderResults() : renderVoting()}
             <Button onClick={handleResults}
                     value={resultButtonText}/>
         </div>
     );
 };
-
-const Group = ({group}) => (<input className="display"
-                                   type="text"
-                                   id={group.id}
-                                   readOnly={true}
-                                   value={group.name}/>);

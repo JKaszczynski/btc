@@ -4,14 +4,14 @@ import lombok.Data;
 
 import javax.persistence.*;
 
-@Entity(name = "TopicGroup")
+@Entity(name = "PollOption")
 @Data
-public class Group {
+public class Option {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
+    private String value;
 
     private Long votes;
 

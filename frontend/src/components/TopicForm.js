@@ -1,45 +1,57 @@
 import React from "react";
 import {Redirect} from "react-router-dom";
-import {Button} from "./Button"
-import {postRequest} from "./HttpRequest";
+import {postRequest} from "./http-request";
+import {optionReducer} from "./option/construct/create-options-reducer";
+import {OptionsConstructGroup} from "./option/construct/OptionsConstructGroup";
 
 export const TopicForm = () => {
 
-    const [isFetching, setFetching] = React.useState(false);
-    const [value, setValue] = React.useState("");
-    const [groups, setGroups] = React.useState([]);
-    const [topic, setTopic] = React.useState({});
+    const [options, dispatchOptions] = React.useReducer(
+        optionReducer,
+        {data: [], isFull: false}
+    );
+
+    const [isSubmitted, setSubmitted] = React.useState(false);
+    const [topic, setTopic] = React.useState({name: ""});
 
     const handleNameChange = (event) => {
-        setValue(event.target.value);
+        setTopic({name: event.target.value});
     };
 
-    const handleGroupNameChange = (id, event) => {
-        const newGroups = groups.map((group) => {
-            if (group.id !== id) return group;
-            return {...group, name: event.target.value};
+    const handleOptionChange = (id, event) => {
+        dispatchOptions({
+            type: "CHANGE_VALUE",
+            payload: {
+                id: id,
+                value: event.target.value
+            }
         });
+    };
 
-        setGroups(newGroups);
+    const handleAddOption = () => {
+        dispatchOptions({type: "ADD_OPTION"});
+    };
+
+    const handleRemoveOption = (id) => {
+        dispatchOptions({
+            type: "REMOVE_OPTION",
+            payload: {id: id}
+        });
     };
 
     const handleSubmit = (event) => {
         event.preventDefault();
-
-        postRequest("", {"name": value})
-            .then((data) => {
-                persistGroups(data.id);
-            })
+        postRequest("", {"name": topic.name})
+            .then((data) => persistOptions(data.id))
             .catch((err) => {
                 console.info(err);
             });
 
-        const persistGroups = (topicId) => {
-            postRequest(`${topicId}/groups`, groups)
-                .then(function (data) {
-                    setGroups(data);
-                    setTopic({id: topicId, name: value});
-                    setFetching(true);
+        const persistOptions = (topicId) => {
+            postRequest(`${topicId}/options`, options.data)
+                .then(() => {
+                    setTopic({id: topicId, name: topic.name});
+                    setSubmitted(true);
                 })
                 .catch((err) => {
                     console.info(err);
@@ -47,92 +59,30 @@ export const TopicForm = () => {
         }
     };
 
-    const handleAddGroup = () => {
-        const groupLimit = 5;
-        if (groups.length >= groupLimit) {
-            return;
-        }
-        const newGroups = groups.concat([{id: groups.length + 1, name: ""}]);
-        setGroups(newGroups);
-        toggleButtonVisibility(newGroups.length);
-    };
-
-    const handleRemoveGroup = (id) => {
-        if (groups.length === 0) {
-            return;
-        }
-        let newGroups = groups.filter((group) => (group.id !== id));
-        newGroups = newGroups.map((group, inx) => ({...group, id: inx + 1}));
-        setGroups(newGroups);
-        toggleButtonVisibility(newGroups.length);
-    };
-
-    const toggleButtonVisibility = (arraySize) => {
-        const groupLimit = 5;
-        if (arraySize === groupLimit) {
-            document.getElementById("addGroupButton").disabled = true;
-        } else if (arraySize === groupLimit - 1) {
-            document.getElementById("addGroupButton").disabled = false;
-        }
-    };
-
-    if (isFetching) {
+    if (isSubmitted) {
         const path = "/topic/" + topic.id;
         return <Redirect to={path}/>
     } else {
         return (
             <form onSubmit={handleSubmit}>
-                <Topic value={value}
+                <Topic topic={topic}
                        onChange={handleNameChange}/>
-                <h4>Groups</h4>
-                <Groups groups={groups}
-                        handleNameChange={handleGroupNameChange}
-                        handleAddGroup={handleAddGroup}
-                        handleDeleteGroup={handleRemoveGroup}/>
-
+                <h4>Add options</h4>
+                <OptionsConstructGroup options={options}
+                                       onChange={handleOptionChange}
+                                       onAdd={handleAddOption}
+                                       onDelete={handleRemoveOption}/>
                 <input type="submit" value="Create"/>
             </form>
         );
     }
-
 };
 
-const Topic = (props) => (
+const Topic = ({topic, onChange}) => (
     <label>
         <input type="text"
                placeholder="Topic name"
-               value={props.value}
-               onChange={props.onChange}/>
+               value={topic.name}
+               onChange={onChange}/>
     </label>
-);
-
-const Groups = (props) => {
-    return (<div>
-            {props.groups.map((group) => (
-                <Group
-                    key={group.id}
-                    id={group.id}
-                    value={group.name}
-                    onChange={props.handleNameChange}
-                    onDelete={props.handleDeleteGroup}/>
-            ))}
-            <Button value="Add Group"
-                    onClick={props.handleAddGroup}
-                    id="addGroupButton"/>
-        </div>
-    )
-};
-
-const Group = (props) => (
-    <div className="group">
-        <input
-            type="text"
-            id={props.id}
-            placeholder={`group #${props.id} name`}
-            value={props.value}
-            onChange={e => props.onChange(props.id, e)}
-        />
-        <Button value="Delete"
-                onClick={() => props.onDelete(props.id)}/>
-    </div>
 );
